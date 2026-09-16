@@ -17,6 +17,4 @@ jobs:
       - run: cd data/raw && sha256sum -c SHA256SUMS
       - run: python src/analyse.py
       - run: python -m unittest discover -s tests -v
-      # Les PNG peuvent varier selon les bibliotheques de polices du runner.
-      # Les tableaux numeriques, eux, doivent etre strictement reproductibles.
-      - run: git diff --exit-code -- outputs/tables
+      - run: git diff --exit-code -- RESULTATS.md outputs/tables

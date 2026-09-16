@@ -1,5 +1,4 @@
 pandas==2.3.2
-matplotlib==3.10.6
 xlrd==2.0.2
 jupyter==1.1.1
 nbconvert==7.16.6

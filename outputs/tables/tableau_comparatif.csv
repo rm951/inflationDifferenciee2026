@@ -1,0 +1,38 @@
+category,dimension,group_code,group_label,modeled_inflation,difference_vs_modeled_total,rank_within_dimension,rank_all_profiles
+age,Âge de la personne de référence,1,Moins de 25 ans,2.824055134879507,0.23377948529098047,1,1
+age,Âge de la personne de référence,2,25-34 ans,2.6673522839770216,0.07707663438849499,2,7
+age,Âge de la personne de référence,4,45-54 ans,2.6500629649660667,0.05978731537754012,3,14
+age,Âge de la personne de référence,5,55-64 ans,2.6021472496270075,0.011871600038480867,4,21
+age,Âge de la personne de référence,3,35-44 ans,2.5523912587606414,-0.037884390827885195,5,28
+age,Âge de la personne de référence,6,65-74 ans,2.545976755363641,-0.04429889422488564,6,29
+age,Âge de la personne de référence,7,75 ans ou plus,2.3720739812953058,-0.21820166829322085,7,37
+categorie_socioprofessionnelle,Catégorie socioprofessionnelle,6,Ouvriers,2.733357628851812,0.14308197926328559,1,2
+categorie_socioprofessionnelle,Catégorie socioprofessionnelle,1,Agriculteurs,2.7221612895424583,0.13188563995393165,2,3
+categorie_socioprofessionnelle,Catégorie socioprofessionnelle,2,"Artisans, commerçants et chefs d'entreprise",2.7126371617264255,0.12236151213789892,3,4
+categorie_socioprofessionnelle,Catégorie socioprofessionnelle,4,Professions intermédiaires,2.6759930216557395,0.08571737206721286,4,6
+categorie_socioprofessionnelle,Catégorie socioprofessionnelle,5,Employés,2.659075346868273,0.06879969727974622,5,8
+categorie_socioprofessionnelle,Catégorie socioprofessionnelle,8,Autres inactifs,2.518622134144313,-0.0716535154442135,6,32
+categorie_socioprofessionnelle,Catégorie socioprofessionnelle,3,Cadres,2.4960517131184132,-0.0942239364701134,7,34
+categorie_socioprofessionnelle,Catégorie socioprofessionnelle,7,Retraités,2.4931026375852197,-0.09717301200330697,8,35
+lieu_de_residence,Lieu de résidence,0,Communes rurales,2.6584271527200185,0.06815150313149188,1,10
+lieu_de_residence,Lieu de résidence,2,Villes moyennes (20 000 à 100 000 hab.),2.6536703857406057,0.06339473615207902,2,13
+lieu_de_residence,Lieu de résidence,1,Petites villes (< 20 000 hab.),2.6131735322385548,0.022897882650028123,3,19
+lieu_de_residence,Lieu de résidence,3,Grandes villes (> 100 000 hab.),2.5568799851728237,-0.033395664415702964,4,26
+lieu_de_residence,Lieu de résidence,4,Agglomération parisienne,2.5033021599701684,-0.08697348961835827,5,33
+type_de_menage,Type de ménage,5,Autres ménages,2.6438553050220186,0.05357965543349197,1,16
+type_de_menage,Type de ménage,2,Familles monoparentales,2.6105735196252864,0.020297870036759758,2,20
+type_de_menage,Type de ménage,3,Couples sans enfant,2.599373893266337,0.009098243677810203,3,22
+type_de_menage,Type de ménage,4,Couples avec enfants,2.5956629214862965,0.005387271897769885,4,23
+type_de_menage,Type de ménage,1,Personnes seules,2.5548685361590655,-0.03540711342946112,5,27
+decile_de_niveau_de_vie,Décile de niveau de vie,5,Décile 5,2.658560559520919,0.06828490993239233,1,9
+decile_de_niveau_de_vie,Décile de niveau de vie,4,Décile 4,2.6566685038904625,0.06639285430193587,2,11
+decile_de_niveau_de_vie,Décile de niveau de vie,6,Décile 6,2.654147696637438,0.06387204704891136,3,12
+decile_de_niveau_de_vie,Décile de niveau de vie,1,Décile 1,2.647420828831371,0.057145179242844346,4,15
+decile_de_niveau_de_vie,Décile de niveau de vie,7,Décile 7,2.6421511782123694,0.051875528623842815,5,17
+decile_de_niveau_de_vie,Décile de niveau de vie,2,Décile 2,2.6298378108455625,0.03956216125703582,6,18
+decile_de_niveau_de_vie,Décile de niveau de vie,3,Décile 3,2.5816341960247113,-0.008641453563815293,7,24
+decile_de_niveau_de_vie,Décile de niveau de vie,8,Décile 8,2.5742927204377657,-0.01598292915076094,8,25
+decile_de_niveau_de_vie,Décile de niveau de vie,10,Décile 10,2.5353302979001913,-0.054945351688335364,9,30
+decile_de_niveau_de_vie,Décile de niveau de vie,9,Décile 9,2.460775328862849,-0.12950032072567774,10,36
+statut_d_occupation,Statut d'occupation,L,Locataires,2.705670102208075,0.11539445261954828,1,5
+statut_d_occupation,Statut d'occupation,P,Propriétaires,2.5292137087249795,-0.061061940863547104,2,31

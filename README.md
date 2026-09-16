@@ -2,6 +2,8 @@
 
 Ce depot reprend la logique du projet `memoireESCP`, mais remplace les indices Eurostat par les indices des prix a la consommation de l'Insee. Il estime la hausse des prix subie par differents profils de menages entre aout 2025 et aout 2026, a structure de consommation constante.
 
+Le resultat central est le fichier **[`RESULTATS.md`](RESULTATS.md)**, lisible directement sur GitHub. Il regroupe toutes les categories dans un tableau unique et compare aussi l'amplitude des ecarts pour chaque dimension. Une version exploitable dans un tableur est disponible dans **[`outputs/tables/tableau_comparatif.csv`](outputs/tables/tableau_comparatif.csv)**.
+
 ## Resultat principal
 
 Avec les paniers de l'enquete Budget de famille 2017, la hausse des prix modelisee atteint environ:
@@ -47,7 +49,7 @@ python src/analyse.py
 python -m nbconvert --to notebook --execute notebooks/analyse_insee_2026.ipynb --inplace
 ```
 
-Les tableaux sont ecrits dans `outputs/tables/` et les graphiques dans `outputs/figures/`.
+Les tableaux sont ecrits dans `outputs/tables/`. L'analyse ne genere pas de graphiques.
 
 ## Prudence editoriale
 

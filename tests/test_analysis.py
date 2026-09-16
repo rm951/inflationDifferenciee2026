@@ -5,7 +5,12 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.analyse import CATEGORY_SPECS, calculate_category, load_price_ratios
+from src.analyse import (
+    CATEGORY_SPECS,
+    build_comparison_table,
+    calculate_category,
+    load_price_ratios,
+)
 
 
 class AnalysisTests(unittest.TestCase):
@@ -47,6 +52,21 @@ class AnalysisTests(unittest.TestCase):
             - indexed.loc["4", "modeled_inflation"]
         )
         self.assertAlmostEqual(contribution_gap, modeled_gap, places=12)
+
+    def test_comparison_table_contains_every_non_total_group(self):
+        results = []
+        for category, spec in CATEGORY_SPECS.items():
+            result, _ = calculate_category(category, spec, self.ratios)
+            results.append(result)
+
+        import pandas as pd
+
+        combined = pd.concat(results, ignore_index=True)
+        comparison = build_comparison_table(combined)
+        expected = (combined["group_code"] != "TOT").sum()
+        self.assertEqual(len(comparison), expected)
+        self.assertFalse((comparison["group_code"] == "TOT").any())
+        self.assertTrue((comparison["rank_within_dimension"] >= 1).all())
 
 
 if __name__ == "__main__":

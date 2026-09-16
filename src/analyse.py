@@ -3,17 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import matplotlib
 import pandas as pd
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw"
 TABLES = ROOT / "outputs" / "tables"
-FIGURES = ROOT / "outputs" / "figures"
 
 DIVISION_PATTERN = r"0[1-9]|1[0-2]"
 
@@ -37,12 +32,12 @@ CATEGORY_SPECS = {
         "column": "CSPR",
         "labels": {
             "1": "Agriculteurs",
-            "2": "Artisans, commercants et chefs d'entreprise",
+            "2": "Artisans, commerçants et chefs d'entreprise",
             "3": "Cadres",
-            "4": "Professions intermediaires",
-            "5": "Employes",
+            "4": "Professions intermédiaires",
+            "5": "Employés",
             "6": "Ouvriers",
-            "7": "Retraites",
+            "7": "Retraités",
             "8": "Autres inactifs",
             "TOT": "Ensemble",
         },
@@ -53,9 +48,9 @@ CATEGORY_SPECS = {
         "labels": {
             "0": "Communes rurales",
             "1": "Petites villes (< 20 000 hab.)",
-            "2": "Villes moyennes (20 000 a 100 000 hab.)",
+            "2": "Villes moyennes (20 000 à 100 000 hab.)",
             "3": "Grandes villes (> 100 000 hab.)",
-            "4": "Agglomeration parisienne",
+            "4": "Agglomération parisienne",
             "TOT": "Ensemble",
         },
     },
@@ -67,35 +62,44 @@ CATEGORY_SPECS = {
             "2": "Familles monoparentales",
             "3": "Couples sans enfant",
             "4": "Couples avec enfants",
-            "5": "Autres menages",
+            "5": "Autres ménages",
             "TOT": "Ensemble",
         },
     },
     "decile_de_niveau_de_vie": {
         "file": "TF106.csv",
         "column": "DECUC",
-        "labels": {**{str(i): f"Decile {i}" for i in range(1, 11)}, "TOT": "Ensemble"},
+        "labels": {**{str(i): f"Décile {i}" for i in range(1, 11)}, "TOT": "Ensemble"},
     },
     "statut_d_occupation": {
         "file": "TF107.csv",
         "column": "STATUT",
         "keep": ["P", "L", "TOT"],
-        "labels": {"P": "Proprietaires", "L": "Locataires", "TOT": "Ensemble"},
+        "labels": {"P": "Propriétaires", "L": "Locataires", "TOT": "Ensemble"},
     },
 }
 
+CATEGORY_TITLES = {
+    "age": "Âge de la personne de référence",
+    "categorie_socioprofessionnelle": "Catégorie socioprofessionnelle",
+    "lieu_de_residence": "Lieu de résidence",
+    "type_de_menage": "Type de ménage",
+    "decile_de_niveau_de_vie": "Décile de niveau de vie",
+    "statut_d_occupation": "Statut d'occupation",
+}
+
 DIVISION_LABELS = {
-    "01": "Alimentation et boissons non alcoolisees",
-    "02": "Boissons alcoolisees et tabac",
+    "01": "Alimentation et boissons non alcoolisées",
+    "02": "Boissons alcoolisées et tabac",
     "03": "Habillement et chaussures",
-    "04": "Logement, eau et energie",
+    "04": "Logement, eau et énergie",
     "05": "Meubles et entretien du foyer",
-    "06": "Sante",
+    "06": "Santé",
     "07": "Transports",
     "08": "Information et communication",
     "09": "Loisirs et culture",
     "10": "Enseignement",
-    "11": "Restauration et hebergement",
+    "11": "Restauration et hébergement",
     "12": "Autres biens et services",
 }
 
@@ -197,49 +201,107 @@ def calculate_category(category: str, spec: dict, ratios: dict[str, float]) -> t
     return result, detail
 
 
-def plot_category(results: pd.DataFrame, category: str, filename: str, title: str) -> None:
-    data = results[(results["category"] == category) & (results["group_code"] != "TOT")].copy()
-    data = data.sort_values("modeled_inflation", ascending=True)
-    fig, ax = plt.subplots(figsize=(10, max(4.8, 0.52 * len(data))))
-    colors = ["#b2182b" if x > 0 else "#2166ac" for x in data["difference_vs_modeled_total"]]
-    bars = ax.barh(data["group_label"], data["modeled_inflation"], color=colors)
-    reference = float(results.loc[(results["category"] == category) & (results["group_code"] == "TOT"), "modeled_inflation"].iloc[0])
-    ax.axvline(reference, color="#333333", linestyle="--", linewidth=1.4, label=f"Panier moyen modelise: {reference:.2f}%")
-    ax.bar_label(bars, labels=[f"{v:.2f}%" for v in data["modeled_inflation"]], padding=4)
-    ax.set_title(title, loc="left", fontweight="bold")
-    ax.set_xlabel("Hausse des prix entre aout 2025 et aout 2026")
-    ax.spines[["top", "right", "left"]].set_visible(False)
-    ax.grid(axis="x", alpha=0.2)
-    ax.legend(frameon=False, loc="lower right", bbox_to_anchor=(1, 1.01))
-    fig.text(0.01, 0.01, "Calcul reproductible a partir de donnees Insee. Paniers BDF 2017, prix IPC aout 2026.", fontsize=8)
-    fig.tight_layout(rect=(0, 0.04, 1, 1))
-    fig.savefig(FIGURES / filename, dpi=180, bbox_inches="tight")
-    plt.close(fig)
+def build_comparison_table(results: pd.DataFrame) -> pd.DataFrame:
+    comparison = results[results["group_code"] != "TOT"].copy()
+    comparison["dimension"] = comparison["category"].map(CATEGORY_TITLES)
+    comparison["rank_within_dimension"] = (
+        comparison.groupby("category")["modeled_inflation"]
+        .rank(method="min", ascending=False)
+        .astype(int)
+    )
+    comparison["rank_all_profiles"] = (
+        comparison["modeled_inflation"].rank(method="min", ascending=False).astype(int)
+    )
+    order = {category: index for index, category in enumerate(CATEGORY_SPECS)}
+    comparison["dimension_order"] = comparison["category"].map(order)
+    comparison = comparison.sort_values(
+        ["dimension_order", "modeled_inflation", "group_label"],
+        ascending=[True, False, True],
+    )
+    return comparison[
+        [
+            "category",
+            "dimension",
+            "group_code",
+            "group_label",
+            "modeled_inflation",
+            "difference_vs_modeled_total",
+            "rank_within_dimension",
+            "rank_all_profiles",
+        ]
+    ].reset_index(drop=True)
 
 
-def plot_rural_paris_contributions(details: pd.DataFrame) -> None:
-    data = details[details["category"] == "lieu_de_residence"]
-    pivot = data.pivot(index=["division", "division_label"], columns="group_code", values="contribution_points")
-    pivot["difference"] = pivot["0"] - pivot["4"]
-    pivot = pivot.sort_values("difference")
-    fig, ax = plt.subplots(figsize=(10, 6.5))
-    colors = ["#b2182b" if x > 0 else "#2166ac" for x in pivot["difference"]]
-    bars = ax.barh(pivot.index.get_level_values("division_label"), pivot["difference"], color=colors)
-    ax.axvline(0, color="#333333", linewidth=0.8)
-    ax.bar_label(bars, labels=[f"{v:+.2f}" for v in pivot["difference"]], padding=3, fontsize=8)
-    ax.set_title("Ce qui creuse ou reduit l'ecart rural-Paris", loc="left", fontweight="bold")
-    ax.set_xlabel("Contribution a l'ecart d'inflation, en point")
-    ax.spines[["top", "right", "left"]].set_visible(False)
-    ax.grid(axis="x", alpha=0.2)
-    fig.text(0.01, 0.01, "Lecture: une valeur positive accroît l'inflation modelisee des communes rurales par rapport a Paris.", fontsize=8)
-    fig.tight_layout(rect=(0, 0.04, 1, 1))
-    fig.savefig(FIGURES / "contributions_ecart_rural_paris.png", dpi=180, bbox_inches="tight")
-    plt.close(fig)
+def markdown_table(headers: list[str], rows: list[list[str]]) -> str:
+    lines = [
+        "| " + " | ".join(headers) + " |",
+        "| " + " | ".join(["---"] * len(headers)) + " |",
+    ]
+    lines.extend("| " + " | ".join(row) + " |" for row in rows)
+    return "\n".join(lines)
+
+
+def write_readable_results(comparison: pd.DataFrame, metadata: dict) -> None:
+    summary_rows = []
+    for category in CATEGORY_SPECS:
+        subset = comparison[comparison["category"] == category]
+        highest = subset.loc[subset["modeled_inflation"].idxmax()]
+        lowest = subset.loc[subset["modeled_inflation"].idxmin()]
+        summary_rows.append(
+            [
+                CATEGORY_TITLES[category],
+                f"{highest['group_label']} ({highest['modeled_inflation']:.2f} %)".replace(".", ","),
+                f"{lowest['group_label']} ({lowest['modeled_inflation']:.2f} %)".replace(".", ","),
+                f"{highest['modeled_inflation'] - lowest['modeled_inflation']:.2f} point".replace(".", ","),
+            ]
+        )
+
+    detail_rows = []
+    for row in comparison.itertuples():
+        detail_rows.append(
+            [
+                row.dimension,
+                row.group_label,
+                f"{row.modeled_inflation:.3f} %".replace(".", ","),
+                f"{row.difference_vs_modeled_total:+.3f} point".replace(".", ","),
+                str(row.rank_within_dimension),
+                str(row.rank_all_profiles),
+            ]
+        )
+
+    content = [
+        "# Tableau comparatif de l'inflation différenciée",
+        "",
+        "Période: août 2025-août 2026. Calcul à paniers fixes à partir de l'enquête Budget de famille 2017 et de l'IPC Insee d'août 2026.",
+        "",
+        f"IPC officiel de l'ensemble des ménages: **{metadata['official_headline_rate']:.1f} %**. Panier moyen modélisé avec les pondérations BDF 2017: **{metadata['modeled_total_rate_bdf2017']:.3f} %**.".replace(".", ","),
+        "",
+        "## Amplitude des écarts dans chaque dimension",
+        "",
+        markdown_table(
+            ["Dimension", "Inflation la plus élevée", "Inflation la plus faible", "Écart"],
+            summary_rows,
+        ),
+        "",
+        "## Toutes les catégories",
+        "",
+        markdown_table(
+            ["Dimension", "Catégorie", "Inflation modélisée", "Écart au panier moyen", "Rang dimension", "Rang tous profils"],
+            detail_rows,
+        ),
+        "",
+        "## Lecture et limites",
+        "",
+        "Les catégories de dimensions différentes se recoupent: un même ménage peut être rural, locataire, ouvrier et appartenir à un décile de niveau de vie. Le classement transversal sert donc à repérer les paniers les plus exposés, pas à additionner les effets.",
+        "",
+        "Ces estimations ne sont pas des indices catégoriels publiés par l'Insee. Elles mesurent uniquement l'effet de structures de consommation différentes, avec des paniers datant de 2017.",
+        "",
+    ]
+    (ROOT / "RESULTATS.md").write_text("\n".join(content), encoding="utf-8")
 
 
 def main() -> None:
     TABLES.mkdir(parents=True, exist_ok=True)
-    FIGURES.mkdir(parents=True, exist_ok=True)
 
     divisions, ratios, metadata = load_price_ratios()
     all_results = []
@@ -251,8 +313,10 @@ def main() -> None:
 
     results = pd.concat(all_results, ignore_index=True)
     details = pd.concat(all_details, ignore_index=True)
+    comparison = build_comparison_table(results)
     results.to_csv(TABLES / "inflation_par_categorie.csv", index=False)
     details.to_csv(TABLES / "contributions_detaillees.csv", index=False)
+    comparison.to_csv(TABLES / "tableau_comparatif.csv", index=False)
 
     bridge = divisions[
         ["code", "label", "weight_2026", "index_2025_08", "index_2026_08", "annual_rate_exact"]
@@ -268,25 +332,12 @@ def main() -> None:
     metadata["modeled_total_rate_bdf2017"] = modeled_total
     metadata["difference_model_vs_official"] = modeled_total - metadata["official_headline_exact_from_indices"]
     (TABLES / "metadata.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_readable_results(comparison, metadata)
 
-    plot_category(
-        results,
-        "lieu_de_residence",
-        "inflation_lieu_de_residence.png",
-        "Inflation modelisee selon le lieu de residence",
-    )
-    plot_category(
-        results,
-        "decile_de_niveau_de_vie",
-        "inflation_decile_niveau_de_vie.png",
-        "Inflation modelisee selon le decile de niveau de vie",
-    )
-    plot_rural_paris_contributions(details)
-
-    display = results[results["group_code"] != "TOT"].copy()
+    display = comparison.copy()
     display["modeled_inflation"] = display["modeled_inflation"].round(3)
     display["difference_vs_modeled_total"] = display["difference_vs_modeled_total"].round(3)
-    print(display[["category", "group_label", "modeled_inflation", "difference_vs_modeled_total"]].to_string(index=False))
+    print(display[["dimension", "group_label", "modeled_inflation", "difference_vs_modeled_total"]].to_string(index=False))
     print(json.dumps(metadata, ensure_ascii=False, indent=2))
 
 
