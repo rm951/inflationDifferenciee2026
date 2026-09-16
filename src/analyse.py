@@ -103,6 +103,23 @@ DIVISION_LABELS = {
     "12": "Autres biens et services",
 }
 
+DIVISION_SHORT_LABELS = {
+    "01": "Alimentation",
+    "02": "Alcool-tabac",
+    "03": "Habillement",
+    "04": "Logement-énergie",
+    "05": "Équipement du foyer",
+    "06": "Santé",
+    "07": "Transports",
+    "08": "Information-communication",
+    "09": "Loisirs-culture",
+    "10": "Enseignement",
+    "11": "Restauration-hébergement",
+    "12": "Autres biens-services",
+}
+
+SHARE_COLUMNS = {code: f"spending_share_{code}_pct" for code in DIVISION_LABELS}
+
 
 def load_price_ratios() -> tuple[pd.DataFrame, dict[str, float], dict]:
     """Charge les indices Insee d'aout 2026 et construit le pont COICOP."""
@@ -201,17 +218,17 @@ def calculate_category(category: str, spec: dict, ratios: dict[str, float]) -> t
     return result, detail
 
 
-def build_comparison_table(results: pd.DataFrame) -> pd.DataFrame:
+def build_comparison_table(results: pd.DataFrame, details: pd.DataFrame) -> pd.DataFrame:
     comparison = results[results["group_code"] != "TOT"].copy()
     comparison["dimension"] = comparison["category"].map(CATEGORY_TITLES)
-    comparison["rank_within_dimension"] = (
-        comparison.groupby("category")["modeled_inflation"]
-        .rank(method="min", ascending=False)
-        .astype(int)
+
+    shares = details[details["group_code"] != "TOT"].pivot(
+        index=["category", "group_code"],
+        columns="division",
+        values="budget_share",
     )
-    comparison["rank_all_profiles"] = (
-        comparison["modeled_inflation"].rank(method="min", ascending=False).astype(int)
-    )
+    shares = (shares * 100).rename(columns=SHARE_COLUMNS).reset_index()
+    comparison = comparison.merge(shares, on=["category", "group_code"], how="left")
     order = {category: index for index, category in enumerate(CATEGORY_SPECS)}
     comparison["dimension_order"] = comparison["category"].map(order)
     comparison["display_order"] = -comparison["modeled_inflation"]
@@ -231,8 +248,7 @@ def build_comparison_table(results: pd.DataFrame) -> pd.DataFrame:
             "group_label",
             "modeled_inflation",
             "difference_vs_modeled_total",
-            "rank_within_dimension",
-            "rank_all_profiles",
+            *SHARE_COLUMNS.values(),
         ]
     ].reset_index(drop=True)
 
@@ -246,7 +262,11 @@ def markdown_table(headers: list[str], rows: list[list[str]]) -> str:
     return "\n".join(lines)
 
 
-def write_readable_results(comparison: pd.DataFrame, metadata: dict) -> None:
+def write_readable_results(
+    comparison: pd.DataFrame,
+    metadata: dict,
+    division_rates: dict[str, float],
+) -> None:
     official_rate = f"{metadata['official_headline_rate']:.2f}".replace(".", ",")
     modeled_rate = f"{metadata['modeled_total_rate_bdf2017']:.2f}".replace(".", ",")
     summary_rows = []
@@ -265,16 +285,24 @@ def write_readable_results(comparison: pd.DataFrame, metadata: dict) -> None:
 
     detail_rows = []
     for row in comparison.itertuples():
+        spending_shares = [
+            f"{getattr(row, SHARE_COLUMNS[code]):.2f} %".replace(".", ",")
+            for code in DIVISION_LABELS
+        ]
         detail_rows.append(
             [
                 row.dimension,
                 row.group_label,
                 f"{row.modeled_inflation:.2f} %".replace(".", ","),
                 f"{row.difference_vs_modeled_total:+.2f} point".replace(".", ","),
-                str(row.rank_within_dimension),
-                str(row.rank_all_profiles),
+                *spending_shares,
             ]
         )
+
+    explanatory_headers = []
+    for code in DIVISION_LABELS:
+        rate = f"{division_rates[code]:+.2f} %".replace(".", ",")
+        explanatory_headers.append(f"{DIVISION_SHORT_LABELS[code]} ({rate})")
 
     content = [
         "# Tableau comparatif de l'inflation différenciée",
@@ -294,14 +322,22 @@ def write_readable_results(comparison: pd.DataFrame, metadata: dict) -> None:
         "",
         "**Définition des déciles:** ils partagent la distribution des niveaux de vie en dix groupes de même taille, classés du plus faible au plus élevé. Dans ce tableau, le décile 1 correspond aux 10 % situés en bas de la distribution et le décile 10 aux 10 % situés en haut.",
         "",
+        "**Lecture des postes de dépenses:** le pourcentage entre parenthèses dans chaque en-tête est l'inflation nationale du poste entre août 2025 et août 2026. Les cellules indiquent la part de ce poste dans le budget 2017 du profil. Chaque ligne totalise 100 % sur les douze postes avant arrondi.",
+        "",
         markdown_table(
-            ["Dimension", "Catégorie", "Inflation modélisée", "Écart au panier moyen", "Rang dimension", "Rang tous profils"],
+            [
+                "Dimension",
+                "Catégorie",
+                "Inflation modélisée",
+                "Écart au panier moyen",
+                *explanatory_headers,
+            ],
             detail_rows,
         ),
         "",
         "## Lecture et limites",
         "",
-        "Les catégories de dimensions différentes se recoupent: un même ménage peut être rural, locataire, ouvrier et appartenir à un décile de niveau de vie. Le classement transversal sert donc à repérer les paniers les plus exposés, pas à additionner les effets.",
+        "Les catégories de dimensions différentes se recoupent: un même ménage peut être rural, locataire, ouvrier et appartenir à un décile de niveau de vie. La comparaison transversale sert donc à repérer les paniers les plus exposés, pas à additionner les effets.",
         "",
         "Ces estimations ne sont pas des indices catégoriels publiés par l'Insee. Elles mesurent uniquement l'effet de structures de consommation différentes, avec des paniers datant de 2017.",
         "",
@@ -322,7 +358,7 @@ def main() -> None:
 
     results = pd.concat(all_results, ignore_index=True)
     details = pd.concat(all_details, ignore_index=True)
-    comparison = build_comparison_table(results)
+    comparison = build_comparison_table(results, details)
     results.to_csv(TABLES / "inflation_par_categorie.csv", index=False)
     details.to_csv(TABLES / "contributions_detaillees.csv", index=False)
     comparison_export = comparison.copy()
@@ -330,6 +366,8 @@ def main() -> None:
     comparison_export["difference_vs_modeled_total"] = comparison_export[
         "difference_vs_modeled_total"
     ].round(2)
+    for column in SHARE_COLUMNS.values():
+        comparison_export[column] = comparison_export[column].round(2)
     comparison_export.to_csv(TABLES / "tableau_comparatif.csv", index=False)
 
     bridge = divisions[
@@ -346,7 +384,10 @@ def main() -> None:
     metadata["modeled_total_rate_bdf2017"] = modeled_total
     metadata["difference_model_vs_official"] = modeled_total - metadata["official_headline_exact_from_indices"]
     (TABLES / "metadata.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    write_readable_results(comparison, metadata)
+    division_rates = (
+        details.groupby("division", sort=False)["division_rate"].first().to_dict()
+    )
+    write_readable_results(comparison, metadata, division_rates)
 
     display = comparison.copy()
     display["modeled_inflation"] = display["modeled_inflation"].round(3)

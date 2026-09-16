@@ -55,18 +55,24 @@ class AnalysisTests(unittest.TestCase):
 
     def test_comparison_table_contains_every_non_total_group(self):
         results = []
+        details = []
         for category, spec in CATEGORY_SPECS.items():
-            result, _ = calculate_category(category, spec, self.ratios)
+            result, detail = calculate_category(category, spec, self.ratios)
             results.append(result)
+            details.append(detail)
 
         import pandas as pd
 
         combined = pd.concat(results, ignore_index=True)
-        comparison = build_comparison_table(combined)
+        combined_details = pd.concat(details, ignore_index=True)
+        comparison = build_comparison_table(combined, combined_details)
         expected = (combined["group_code"] != "TOT").sum()
         self.assertEqual(len(comparison), expected)
         self.assertFalse((comparison["group_code"] == "TOT").any())
-        self.assertTrue((comparison["rank_within_dimension"] >= 1).all())
+        share_columns = [column for column in comparison if column.startswith("spending_share_")]
+        self.assertEqual(len(share_columns), 12)
+        for value in comparison[share_columns].sum(axis=1):
+            self.assertAlmostEqual(value, 100.0, places=10)
         deciles = comparison.loc[
             comparison["category"] == "decile_de_niveau_de_vie", "group_code"
         ].tolist()
