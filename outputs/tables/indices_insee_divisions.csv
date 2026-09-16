@@ -1,0 +1,14 @@
+code,label,weight_2026,index_2025_08,index_2026_08,annual_rate_exact
+01,Produits alimentaires et boissons non alcoolisées,1338,100.66,101.82,1.1523941982912733
+02,"Boissons alcoolisées, tabac et stupéfiants",315,100.14,102.02,1.8773716796484985
+03,Articles d’habillement et chaussures,322,98.69,97.23,-1.479379876380582
+04,"Logement, eau, gaz, électricité et autres combustibles",1548,99.82,103.39,3.576437587657799
+05,"Meubles, articles de ménage et entretien courant du foyer",407,100.34,100.32,-0.019932230416597196
+06,Santé,1237,99.44,98.93,-0.5128720836685363
+07,Transports,1414,101.7,108.8,6.9813176007866184
+08,Information et communication,377,99.04,103.93,4.937399030694678
+09,"Loisirs, sport et culture",736,102.59,102.13,-0.4483867823374621
+10,Services de l'enseignement,84,99.61,104.32,4.728440919586374
+11,Services de restauration et d'hébergement,988,105.52,107.49,1.8669446550416913
+12,Assurance et services financiers,385,100.7,103.92,3.1976166832174746
+13,"Soins corporels, protection sociale et biens et services divers",849,100.17,102.85,2.6754517320555005

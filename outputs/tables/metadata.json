@@ -1,0 +1,9 @@
+{
+  "price_month": "2026-08",
+  "comparison_month": "2025-08",
+  "official_headline_rate": 2.4,
+  "official_headline_exact_from_indices": 2.357135782905817,
+  "bridge_old_division_12_rate": 2.838363811631961,
+  "modeled_total_rate_bdf2017": 2.5902756495885266,
+  "difference_model_vs_official": 0.23313986668270958
+}
