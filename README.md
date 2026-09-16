@@ -4,6 +4,10 @@ Ce depot reprend la logique du projet `memoireESCP`, mais remplace les indices E
 
 Le resultat central est le fichier **[`RESULTATS.md`](RESULTATS.md)**, lisible directement sur GitHub. Il regroupe toutes les categories dans un tableau unique et compare aussi l'amplitude des ecarts pour chaque dimension. Une version exploitable dans un tableur est disponible dans **[`outputs/tables/tableau_comparatif.csv`](outputs/tables/tableau_comparatif.csv)**.
 
+[![Ouvrir dans Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rm951/inflationDifferenciee2026/blob/main/notebooks/analyse_insee_2026.ipynb)
+
+Le bouton ci-dessus ouvre le notebook dans Google Colab. Dans Colab, choisir `Exécution` puis `Tout exécuter`: le dépôt et la dépendance nécessaire à la lecture des fichiers Insee sont chargés automatiquement.
+
 ## Resultat principal
 
 Avec les paniers de l'enquete Budget de famille 2017, la hausse des prix modelisee atteint environ:
@@ -40,6 +44,12 @@ Le calcul est realise au niveau des divisions COICOP. Ce choix permet un raccord
 La nouvelle nomenclature a scinde l'ancienne division 12 entre les divisions 12 et 13. Le code les recombine avec leurs ponderations nationales dans l'IPC 2026. Cette approximation est documentee dans le code et dans `SOURCES.md`.
 
 ## Reproduire l'analyse
+
+### En ligne avec Google Colab
+
+Cliquer sur le bouton `Ouvrir dans Google Colab` en haut de cette page, puis sur `Exécution` > `Tout exécuter`. Aucun téléchargement ni environnement Python local n'est nécessaire.
+
+### En local
 
 ```bash
 python -m venv .venv
