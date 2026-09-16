@@ -67,6 +67,10 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(len(comparison), expected)
         self.assertFalse((comparison["group_code"] == "TOT").any())
         self.assertTrue((comparison["rank_within_dimension"] >= 1).all())
+        deciles = comparison.loc[
+            comparison["category"] == "decile_de_niveau_de_vie", "group_code"
+        ].tolist()
+        self.assertEqual(deciles, [str(i) for i in range(1, 11)])
 
 
 if __name__ == "__main__":

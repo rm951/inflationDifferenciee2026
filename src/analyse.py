@@ -214,9 +214,14 @@ def build_comparison_table(results: pd.DataFrame) -> pd.DataFrame:
     )
     order = {category: index for index, category in enumerate(CATEGORY_SPECS)}
     comparison["dimension_order"] = comparison["category"].map(order)
+    comparison["display_order"] = -comparison["modeled_inflation"]
+    is_decile = comparison["category"] == "decile_de_niveau_de_vie"
+    comparison.loc[is_decile, "display_order"] = pd.to_numeric(
+        comparison.loc[is_decile, "group_code"]
+    )
     comparison = comparison.sort_values(
-        ["dimension_order", "modeled_inflation", "group_label"],
-        ascending=[True, False, True],
+        ["dimension_order", "display_order", "group_label"],
+        ascending=[True, True, True],
     )
     return comparison[
         [
@@ -242,6 +247,8 @@ def markdown_table(headers: list[str], rows: list[list[str]]) -> str:
 
 
 def write_readable_results(comparison: pd.DataFrame, metadata: dict) -> None:
+    official_rate = f"{metadata['official_headline_rate']:.2f}".replace(".", ",")
+    modeled_rate = f"{metadata['modeled_total_rate_bdf2017']:.2f}".replace(".", ",")
     summary_rows = []
     for category in CATEGORY_SPECS:
         subset = comparison[comparison["category"] == category]
@@ -262,8 +269,8 @@ def write_readable_results(comparison: pd.DataFrame, metadata: dict) -> None:
             [
                 row.dimension,
                 row.group_label,
-                f"{row.modeled_inflation:.3f} %".replace(".", ","),
-                f"{row.difference_vs_modeled_total:+.3f} point".replace(".", ","),
+                f"{row.modeled_inflation:.2f} %".replace(".", ","),
+                f"{row.difference_vs_modeled_total:+.2f} point".replace(".", ","),
                 str(row.rank_within_dimension),
                 str(row.rank_all_profiles),
             ]
@@ -274,7 +281,7 @@ def write_readable_results(comparison: pd.DataFrame, metadata: dict) -> None:
         "",
         "Période: août 2025-août 2026. Calcul à paniers fixes à partir de l'enquête Budget de famille 2017 et de l'IPC Insee d'août 2026.",
         "",
-        f"IPC officiel de l'ensemble des ménages: **{metadata['official_headline_rate']:.1f} %**. Panier moyen modélisé avec les pondérations BDF 2017: **{metadata['modeled_total_rate_bdf2017']:.3f} %**.".replace(".", ","),
+        f"IPC officiel de l'ensemble des ménages: **{official_rate} %**. Panier moyen modélisé avec les pondérations BDF 2017: **{modeled_rate} %**.",
         "",
         "## Amplitude des écarts dans chaque dimension",
         "",
@@ -284,6 +291,8 @@ def write_readable_results(comparison: pd.DataFrame, metadata: dict) -> None:
         ),
         "",
         "## Toutes les catégories",
+        "",
+        "**Définition des déciles:** ils partagent la distribution des niveaux de vie en dix groupes de même taille, classés du plus faible au plus élevé. Dans ce tableau, le décile 1 correspond aux 10 % situés en bas de la distribution et le décile 10 aux 10 % situés en haut.",
         "",
         markdown_table(
             ["Dimension", "Catégorie", "Inflation modélisée", "Écart au panier moyen", "Rang dimension", "Rang tous profils"],
@@ -316,7 +325,12 @@ def main() -> None:
     comparison = build_comparison_table(results)
     results.to_csv(TABLES / "inflation_par_categorie.csv", index=False)
     details.to_csv(TABLES / "contributions_detaillees.csv", index=False)
-    comparison.to_csv(TABLES / "tableau_comparatif.csv", index=False)
+    comparison_export = comparison.copy()
+    comparison_export["modeled_inflation"] = comparison_export["modeled_inflation"].round(2)
+    comparison_export["difference_vs_modeled_total"] = comparison_export[
+        "difference_vs_modeled_total"
+    ].round(2)
+    comparison_export.to_csv(TABLES / "tableau_comparatif.csv", index=False)
 
     bridge = divisions[
         ["code", "label", "weight_2026", "index_2025_08", "index_2026_08", "annual_rate_exact"]
